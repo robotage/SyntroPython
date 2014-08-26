@@ -405,7 +405,7 @@ static PyMethodDef SyntroPythonMethods[] = {
 
     {"setWindowTitle", (PyCFunction)setWindowTitle, METH_VARARGS,
     "Sets the window title in GUI mode.\n"
-    "The parameter is a string containign the new window title.\n"
+    "The parameter is a string containing the new window title.\n"
     "The function returns None"},
 
     {"displayImage", (PyCFunction)displayImage, METH_VARARGS,
