@@ -26,7 +26,7 @@
 # make the serviceName empty to find first source or else specify the path to the desired source
 # serviceName will be the host name of the source by default
 
-serviceName = "tk1-2"
+serviceName = ""
 
 # Now do the main imports
 
