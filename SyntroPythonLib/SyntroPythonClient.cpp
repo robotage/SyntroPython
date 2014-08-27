@@ -28,6 +28,7 @@
 #include "DirectoryEntry.h"
 
 #include <qdebug.h>
+#include <qbuffer.h>
 
 SyntroPythonClient::SyntroPythonClient(SyntroPythonGlue *glue)
     : Endpoint(100, "SyntroPythonClient")
@@ -129,6 +130,18 @@ void SyntroPythonClient::appClientReceiveE2E(int servicePort, SYNTRO_EHEAD *mess
 void SyntroPythonClient::clientSendAVData(int servicePort, QByteArray video, QByteArray audio)
 {
     if (clientIsServiceActive(servicePort) && clientClearToSend(servicePort)) {
+        QImage img((unsigned char *)video.data(), m_avParams.videoWidth, m_avParams.videoHeight, QImage::Format_RGB888);
+        QByteArray jpegArray;
+        QBuffer buffer(&jpegArray);
+        buffer.open(QIODevice::WriteOnly);
+        img.save(&buffer, "JPEG", 70);
+        clientSendJpegAVData(servicePort, jpegArray, audio);
+    }
+}
+
+void SyntroPythonClient::clientSendJpegAVData(int servicePort, QByteArray video, QByteArray audio)
+{
+    if (clientIsServiceActive(servicePort) && clientClearToSend(servicePort)) {
         SYNTRO_EHEAD *multiCast = clientBuildMessage(servicePort, sizeof(SYNTRO_RECORD_AVMUX)
                                                   + video.size() + audio.size());
         SYNTRO_RECORD_AVMUX *avHead = (SYNTRO_RECORD_AVMUX *)(multiCast + 1);
@@ -150,6 +163,7 @@ void SyntroPythonClient::clientSendAVData(int servicePort, QByteArray video, QBy
         clientSendMessage(servicePort, multiCast, length, SYNTROLINK_MEDPRI);
     }
 }
+
 
 void SyntroPythonClient::clientSendMulticastData(int servicePort, QByteArray data)
 {

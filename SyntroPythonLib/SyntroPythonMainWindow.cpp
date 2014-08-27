@@ -25,6 +25,7 @@
 #include "SyntroUtils.h"
 #include "SyntroPythonClient.h"
 #include "SyntroPythonGlue.h"
+#include "SyntroPythonVidCap.h"
 
 #include <qboxlayout.h>
 #include <qpainter.h>
@@ -37,6 +38,9 @@ SyntroPythonMainWindow::SyntroPythonMainWindow(SyntroPythonGlue *glue)
 
     connect(this, SIGNAL(clientSendAVData(int,QByteArray,QByteArray)),
                          m_client, SLOT(clientSendAVData(int,QByteArray,QByteArray)));
+
+    connect(this, SIGNAL(clientSendJpegAVData(int,QByteArray,QByteArray)),
+                         m_client, SLOT(clientSendJpegAVData(int,QByteArray,QByteArray)));
 
     connect(this, SIGNAL(clientSendMulticastData(int,QByteArray)),
                          m_client, SLOT(clientSendMulticastData(int,QByteArray)));
@@ -71,6 +75,17 @@ SyntroPythonMainWindow::SyntroPythonMainWindow(SyntroPythonGlue *glue)
     show();
 }
 
+void SyntroPythonMainWindow::addVidCapSignal(SyntroPythonVidCap *vidCap)
+{
+    connect(vidCap, SIGNAL(newFrame(int,QByteArray,bool,int,int,int)), this, SLOT(newFrame(int,QByteArray,bool,int,int,int)));
+}
+
+void SyntroPythonMainWindow::newFrame(int cameraNum, QByteArray frame, bool jpeg, int width, int height, int rate)
+{
+    addFrameToQueue(cameraNum, frame, jpeg, width, height, rate);
+}
+
+
 void SyntroPythonMainWindow::stopRunning()
 {
     close();
@@ -82,6 +97,15 @@ bool SyntroPythonMainWindow::sendAVData(int servicePort, unsigned char *videoDat
     if (m_mustExit)
         return false;
     emit clientSendAVData(servicePort, QByteArray((const char *)videoData, videoLength), QByteArray((const char *)audioData, audioLength));
+    return true;
+}
+
+bool SyntroPythonMainWindow::sendJpegAVData(int servicePort, unsigned char *videoData, int videoLength,
+                    unsigned char *audioData, int audioLength)
+{
+    if (m_mustExit)
+        return false;
+    emit clientSendJpegAVData(servicePort, QByteArray((const char *)videoData, videoLength), QByteArray((const char *)audioData, audioLength));
     return true;
 }
 

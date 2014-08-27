@@ -50,6 +50,7 @@ public:
 
 public slots:
     void clientSendAVData(int servicePort, QByteArray video, QByteArray audio);
+    void clientSendJpegAVData(int servicePort, QByteArray video, QByteArray audio);
     void clientSendMulticastData(int servicePort, QByteArray data);
     void clientSendE2EData(int servicePort, QByteArray data);
 

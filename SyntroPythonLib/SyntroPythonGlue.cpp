@@ -174,6 +174,12 @@ bool SyntroPythonGlue::sendAVData(int servicePort, unsigned char *videoData, int
     return m_main->sendAVData(servicePort, videoData, videoLength, audioData, audioLength);
 }
 
+bool SyntroPythonGlue::sendJpegAVData(int servicePort, unsigned char *videoData, int videoLength,
+                    unsigned char *audioData, int audioLength)
+{
+    return m_main->sendJpegAVData(servicePort, videoData, videoLength, audioData, audioLength);
+}
+
 bool SyntroPythonGlue::getAVData(int servicePort, long long *timestamp, unsigned char **videoData, int *videoLength,
                     unsigned char **audioData, int *audioLength)
 {
@@ -210,5 +216,28 @@ bool SyntroPythonGlue::getE2EData(int servicePort, unsigned char **data, int *da
     return m_main->getClient()->getGenericData(servicePort, data, dataLength);
 }
 
+bool SyntroPythonGlue::vidCapOpen(int cameraNum, int width, int height, int rate)
+{
+    return m_main->vidCapOpen(cameraNum, width, height, rate);
+}
 
+bool SyntroPythonGlue::vidCapClose(int cameraNum)
+{
+    return m_main->vidCapClose(cameraNum);
+}
+
+bool SyntroPythonGlue::vidCapGetFrame(int cameraNum, unsigned char** frame, int& length, bool& jpeg,
+                                         int& width, int& height, int& rate)
+{
+    QByteArray qframe;
+
+    *frame = NULL;
+
+    if (!m_main->vidCapGetFrame(cameraNum, qframe, jpeg, width, height, rate))
+        return false;
+    *frame = (unsigned char *)malloc(qframe.length());
+    memcpy(*frame, qframe.data(), qframe.length());
+    length = qframe.length();
+    return true;
+}
 

@@ -26,14 +26,31 @@
 
 #include <QThread>
 #include <qdialog.h>
+#include <qmutex.h>
+#include <qbytearray.h>
+#include <qqueue.h>
 
 class SyntroPythonClient;
 class SyntroPythonGlue;
+class SyntroPythonVidCap;
+
+typedef struct
+{
+    SyntroPythonVidCap *vidCap;
+    QString status;
+    QQueue <QByteArray> frameQueue;
+    int cameraNum;
+    int width;
+    int height;
+    int rate;
+    bool jpeg;
+} SYNTROPYTHON_CAPTURE;
 
 class SyntroPythonMain
 {
 public:
     SyntroPythonMain(SyntroPythonGlue *glue);
+    virtual ~SyntroPythonMain();
 
     SyntroPythonClient *getClient() { return m_client; }
 
@@ -44,13 +61,29 @@ public:
     virtual void stopRunning() = 0;
     virtual bool sendAVData(int servicePort, unsigned char *videoData, int videoLength,
                         unsigned char *audioData, int audioLength) = 0; // sends an AV data message
+    virtual bool sendJpegAVData(int servicePort, unsigned char *videoData, int videoLength,
+                        unsigned char *audioData, int audioLength) = 0; // sends an AV data message
     virtual bool sendMulticastData(int servicePort, unsigned char *data, int dataLength) = 0; // sends a generic multicast message
     virtual bool sendE2EData(int servicePort, unsigned char *data, int dataLength) = 0; // sends a generic E2E message
 
+    bool vidCapOpen(int cameraNum, int width, int height, int rate);
+    bool vidCapClose(int cameraNum);
+    bool vidCapGetFrame(int cameraNum, QByteArray& frame, bool& jpeg,
+                                             int& width, int& height, int& rate);
+    virtual void addVidCapSignal(SyntroPythonVidCap *vidCap) = 0;   // adds signal for captured frames
+
+
 protected:
+    void addFrameToQueue(int cameraNum, const QByteArray& frame, bool jpeg, int width, int height, int rate);
+
     SyntroPythonClient *m_client;
     SyntroPythonGlue *m_glue;
     bool m_mustExit;
+
+private:
+    void removeVidCap(int cameraNum);
+    QMutex m_vidCapLock;
+    QList<SYNTROPYTHON_CAPTURE *> m_vidCaps;
 };
 #endif // SYNTROPYTHONMAIN_H
 

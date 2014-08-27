@@ -29,6 +29,7 @@ HEADERS += \
     $$PWD/SyntroPythonMain.h \
     $$PWD/SyntroPythonMainConsole.h \
     $$PWD/SyntroPythonMainWindow.h \
+    $$PWD/SyntroPythonVidCap.h \
     $$PWD/SyntroPythonClient.h \
 
 SOURCES += \
@@ -36,5 +37,6 @@ SOURCES += \
     $$PWD/SyntroPythonMain.cpp \
     $$PWD/SyntroPythonMainConsole.cpp \
     $$PWD/SyntroPythonMainWindow.cpp \
+    $$PWD/SyntroPythonVidCap.cpp \
     $$PWD/SyntroPythonClient.cpp \
 

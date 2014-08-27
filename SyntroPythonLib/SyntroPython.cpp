@@ -117,6 +117,55 @@ static PyObject *displayJpegImage(PyObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+static PyObject *vidCapOpen(PyObject *self, PyObject *args)
+{
+    int cameraNum;
+    int width;
+    int height;
+    int rate;
+
+    if (!PyArg_ParseTuple(args, "iiii", &cameraNum, &width, &height, &rate)) {
+        printf("Bad argument to vidCapOpen\n");
+        return Py_BuildValue("i", 0);
+    }
+
+    return Py_BuildValue("i", syPyGlue.vidCapOpen(cameraNum, width, height, rate));
+}
+
+static PyObject *vidCapClose(PyObject *self, PyObject *args)
+{
+    int cameraNum;
+
+    if (!PyArg_ParseTuple(args, "i", &cameraNum)) {
+        printf("Bad argument to vidCapClose\n");
+        return Py_BuildValue("i", 0);
+    }
+
+    return Py_BuildValue("i", syPyGlue.vidCapClose(cameraNum));
+}
+
+static PyObject *vidCapGetFrame(PyObject *self, PyObject *args)
+{
+    int cameraNum;
+    int width = 0;
+    int height = 0;
+    int rate = 0;
+    bool jpeg = false;
+    unsigned char *frame = NULL;
+    int length = 0;
+
+    if (!PyArg_ParseTuple(args, "i", &cameraNum)) {
+        printf("Bad argument to getAVData\n");
+        return Py_BuildValue("is#iiii", false, frame, length,
+                             jpeg, width, height, rate);
+    }
+    bool ret = syPyGlue.vidCapGetFrame(cameraNum, &frame, length, jpeg, width, height, rate);
+    PyObject* retData = Py_BuildValue("is#iiii", ret, frame, length,
+                                      jpeg, width, height, rate);
+    if (frame != NULL)
+        free(frame);
+    return retData;
+}
 
 static PyObject *startConsoleInput(PyObject *self, PyObject *args)
 {
@@ -290,6 +339,25 @@ static PyObject *sendAVData(PyObject *self, PyObject *args)
         return Py_BuildValue("i", 0);
 }
 
+static PyObject *sendJpegAVData(PyObject *self, PyObject *args)
+{
+    int servicePort;
+    unsigned char *videoData;
+    int videoLength;
+    unsigned char *audioData;
+    int audioLength;
+
+    if (!PyArg_ParseTuple(args, "is#s#", &servicePort, &videoData, &videoLength, &audioData, &audioLength)) {
+        printf("Bad argument to sendJpegAVData\n");
+        return Py_BuildValue("i", 0);
+    }
+
+    if (syPyGlue.sendJpegAVData(servicePort, videoData, videoLength, audioData, audioLength))
+        return Py_BuildValue("i", 1);
+    else
+        return Py_BuildValue("i", 0);
+}
+
 static PyObject *getAVData(PyObject *self, PyObject *args)
 {
     int servicePort;
@@ -422,6 +490,29 @@ static PyMethodDef SyntroPythonMethods[] = {
     "This should be called just before exiting.\n"
     "There are no parameters and the function returns None."},
 
+    {"vidCapOpen", (PyCFunction)vidCapOpen, METH_VARARGS,
+    "Tries to open a camera. The camera is specified by a \n"
+    "camera number starting from 0.\n"
+    "0 is equivalent to /dev/video0, 1 is /dev/video1 etc\n"
+    "The function returns true if successful.\n"},
+
+    {"vidCapClose", (PyCFunction)vidCapClose, METH_VARARGS,
+    "Tries to close a camera. The camera is specified by a \n"
+    "camera number starting from 0.\n"
+    "0 is equivalent to /dev/video0, 1 is /dev/video1 etc\n"
+    "The function returns true if successful.\n"},
+
+    {"vidCapGetFrame", (PyCFunction)vidCapGetFrame, METH_VARARGS,
+    "Tries to get a captured frame from a camera.\n"
+    "The function takes the camera number as its parameter.\n"
+    "It returns 6 values:\n"
+    "  valid - True or False depending on whether the call succeeded\n"
+    "  frame - captured frame (could be jpeg or uncompressed)\n"
+    "  jpeg - True if frame is jpeg compressed, False for uncompressed\n"
+    "  width - width of frame\n"
+    "  height - height of frame\n"
+    "  rate - frame rate\n"},
+
     {"setWindowTitle", (PyCFunction)setWindowTitle, METH_VARARGS,
     "Sets the window title in GUI mode.\n"
     "The parameter is a string containing the new window title.\n"
@@ -539,6 +630,15 @@ static PyMethodDef SyntroPythonMethods[] = {
     "There is no returned value."},
 
     {"sendAVData", (PyCFunction)sendAVData, METH_VARARGS,
+    "This function sends sends audio and video data in the AVMUX format.\n."
+    "The service must be a multicast source that is active and clear to send.\n"
+    "The function takes three parameters:\n"
+    "  servicePort - the service port on which to send the data\n"
+    "  videoData - a str containing an uncompressed frame\n"
+    "  audioData - a str containing uncompressed PCM format audio\n"
+    "Returns True if the call succeeded, False otherwise."},
+
+    {"sendJpegAVData", (PyCFunction)sendJpegAVData, METH_VARARGS,
     "This function sends sends audio and video data in the AVMUX format.\n."
     "The service must be a multicast source that is active and clear to send.\n"
     "The function takes three parameters:\n"

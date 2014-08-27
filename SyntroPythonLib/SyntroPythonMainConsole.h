@@ -40,17 +40,25 @@ public:
     void displayJpegImage(QByteArray, QString ) {}
     bool sendAVData(int servicePort, unsigned char *videoData, int videoLength,
                         unsigned char *audioData, int audioLength); // sends an AV data message
+    bool sendJpegAVData(int servicePort, unsigned char *videoData, int videoLength,
+                        unsigned char *audioData, int audioLength); // sends an AV data message
     bool sendMulticastData(int servicePort, unsigned char *data, int dataLength); // sends a generic multicast message
     bool sendE2EData(int servicePort, unsigned char *data, int dataLength); // sends a generic E2E message
 
     void stopRunning() { m_mustExit = true; }
 
+public slots:
+    void newFrame(int cameraNum, QByteArray frame, bool jpeg, int width, int height, int rate);
+
 signals:
     void clientSendAVData(int servicePort, QByteArray video, QByteArray audio);
+    void clientSendJpegAVData(int servicePort, QByteArray video, QByteArray audio);
     void clientSendMulticastData(int servicePort, QByteArray data);
     void clientSendE2EData(int servicePort, QByteArray data);
 
 protected:
+    void addVidCapSignal(SyntroPythonVidCap *vidCap);
+
     void run();
 };
 

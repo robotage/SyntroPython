@@ -34,6 +34,11 @@ public:
 
     //  functions called from Python
 
+    bool vidCapOpen(int cameraNum, int width, int height, int rate);
+    bool vidCapClose(int cameraNum);
+    bool vidCapGetFrame(int cameraNum, unsigned char** frame, int& length, bool& jpeg,
+                                             int& width, int& height, int& rate);
+
     void startLib(const char *productType, int& argc, char **argv);
     void stopLib();
     void setWindowTitle(char *title);                       // sets the window title in GUI mode
@@ -60,6 +65,8 @@ public:
     void setVideoParams(int width, int height, int rate);   // sets the video capture data
     void setAudioParams(int rate, int size, int channels);  // sets the audio capture data
     bool sendAVData(int servicePort, unsigned char *videoData, int videoLength,
+                        unsigned char *audioData, int audioLength); // sends an AV data message
+    bool sendJpegAVData(int servicePort, unsigned char *videoData, int videoLength,
                         unsigned char *audioData, int audioLength); // sends an AV data message
     bool getAVData(int servicePort, long long *timestamp, unsigned char **videoData, int *videoLength,
                         unsigned char **audioData, int *audioLength); // gets AV data if available

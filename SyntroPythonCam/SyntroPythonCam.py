@@ -28,15 +28,13 @@
 CAMERA_INDEX = 0
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
-CAMERA_FPS = 10
+CAMERA_RATE = 10
 
 # Now onto the real stuff
 
 import SyntroPython
 import SyntroPythonPy
 import sys
-import cv2
-import numpy
 import time
 
 # start SyntroPython running
@@ -46,15 +44,10 @@ SyntroPython.start("SyntroPythonCam", sys.argv)
 time.sleep(1)
 
 # Open the camera device
-camera = cv2.VideoCapture(CAMERA_INDEX)
-if (not camera.isOpened()):
-    print("No camera found")
+if (not SyntroPython.vidCapOpen(CAMERA_INDEX, CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_RATE)):
+    print("Failed to open vidcap")
     SyntroPython.stop()
     sys.exit()
-camera.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, CAMERA_WIDTH)
-camera.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
-camera.set(cv2.cv.CV_CAP_PROP_FPS, CAMERA_FPS)
-SyntroPython.setVideoParams(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_FPS)
 
 # put console into single character mode
 SyntroPython.startConsoleInput()
@@ -76,23 +69,23 @@ if (servicePort == -1):
 
 while(True):
     # get a frame from the camera
-    ret, frame = camera.read()
+    ret, frame, jpeg, width, height, rate = SyntroPython.vidCapGetFrame(CAMERA_INDEX)
     if (ret):            
-        # we have a frame so convert to string for display
-        frameString = frame.tostring()
-        
         # and display it
-        SyntroPython.displayImage(frameString, CAMERA_WIDTH, CAMERA_HEIGHT, "");
+        if (jpeg):
+            SyntroPython.displayJpegImage(frame, "");
+        else:
+            SyntroPython.displayImage(frame, width, height, "");
         
         # now check if it can be sent on the SyntroLink
         if (SyntroPython.isServiceActive(servicePort) and SyntroPython.isClearToSend(servicePort)):
-            
-            # compress and send the frame
-            encode_param = [cv2.IMWRITE_JPEG_QUALITY,80]
-            ret, jpeg = cv2.imencode(".jpg", frame, encode_param)
-            if (ret):
-                pcm = numpy.ndarray(shape=(0, 1))
-                SyntroPython.sendAVData(servicePort, jpeg, pcm)
+            # send the frame
+            SyntroPython.setVideoParams(width, height, rate)
+            pcm = str("")
+            if (jpeg):
+                SyntroPython.sendJpegAVData(servicePort, frame, pcm)
+            else:
+                SyntroPython.sendAVData(servicePort, frame, pcm)
                     
     # process any user console input that might have arrived.   
        
@@ -118,7 +111,7 @@ while(True):
     
 # Exiting so clean everything up.    
 
-camera.release()
+SyntroPython.vidCapClose(CAMERA_INDEX)
 SyntroPython.removeService(servicePort)
 SyntroPython.stop()
 print("Exiting")

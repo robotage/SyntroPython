@@ -14,7 +14,7 @@ SyntroPython has been tested on Linux (Ubuntu 14.04 to be precise). Installation
 
 Prepare the system by installing the pre-requisites:
 
-	sudo apt-get git build-essential qt4-default python-dev python-opencv
+	sudo apt-get git build-essential qt4-default python-dev
 
 This code has been tested with Qt4.8.6 and Qt5.2.1 so qt5-default can be used instead if desired.
 
@@ -67,6 +67,8 @@ You can customize the frame size and rate by editing SyntroPythonCam.py. If you 
 You can also just run the script in console only mode:
 
 	python SyntroPythonCam.py -c
+
+There is a performance advantage to running in console mode. Where possible, SyntroPython will try to capture jpeg frames from the camera and decompression is only necessary if the frames need to be displayed. Running in console mode avoids this.
 	
 #### SyntroPythonView
 
@@ -90,7 +92,7 @@ Try running more than one instance or another copy of SyntroPythonView on anothe
 
 To force SyntroPythonView to always display a particular stream, edit SyntroPythonView.py file and change the "serviceName" to something other than blank. SyntroPythonView will then wait for that stream to become available before opening its window and displaying it.
 
-Note that in this simple implementation, the directory is only request once when the SyntroLink comes up. This means that SyntroPythonView has to be started after SyntroPythonCam unless serviceName has a specific service name set. This is not fundamental and can easily be improved but at the expense of simplicity - it would be necessary to fetch the directory at regular intervals to pick up any new services that might have appeared.
+Note that in this simple implementation, the directory is only requested once when the SyntroLink comes up. This means that SyntroPythonView has to be started after SyntroPythonCam unless serviceName has a specific service name set. This is not fundamental and can easily be improved but at the expense of simplicity - it would be necessary to fetch the directory at regular intervals to pick up any new services that might have appeared.
 
 ### The SyntroPython API
 
