@@ -1,21 +1,25 @@
+////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (c) 2014 richards-tech
+//  This file is part of SyntroPython
 //
-//  This file is part of SyntroNet
+//  Copyright (c) 2014, richards-tech
 //
-//  SyntroNet is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
+//  Permission is hereby granted, free of charge, to any person obtaining a copy of
+//  this software and associated documentation files (the "Software"), to deal in
+//  the Software without restriction, including without limitation the rights to use,
+//  copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+//  Software, and to permit persons to whom the Software is furnished to do so,
+//  subject to the following conditions:
 //
-//  SyntroNet is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
+//  The above copyright notice and this permission notice shall be included in all
+//  copies or substantial portions of the Software.
 //
-//  You should have received a copy of the GNU General Public License
-//  along with SyntroNet.  If not, see <http://www.gnu.org/licenses/>.
-//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+//  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+//  PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+//  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+//  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+//  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #ifndef SYNTROPYTHONMAINWINDOW_H
 #define SYNTROPYTHONMAINWINDOW_H
@@ -34,6 +38,7 @@ public:
 
     void setWindowTitle(char *title);
     void displayImage(QByteArray image, int width, int height, QString timestamp);
+    void displayJpegImage(QByteArray image, QString timestamp);
 
     bool sendAVData(int servicePort, unsigned char *videoData, int videoLength,
                         unsigned char *audioData, int audioLength); // sends an AV data message
@@ -45,15 +50,18 @@ public:
 private slots:
     void windowTitleSlot(QString title);
     void displayImageSlot(QByteArray image, int width, int height, QString timestamp);
+    void displayJpegImageSlot(QByteArray image, QString timestamp);
 
 signals:
     void windowTitleSignal(QString title);
     void displayImageSignal(QByteArray image, int width, int height, QString timestamp);
+    void displayJpegImageSignal(QByteArray image, QString timestamp);
     void clientSendAVData(int servicePort, QByteArray video, QByteArray audio);
     void clientSendMulticastData(int servicePort, QByteArray data);
     void clientSendE2EData(int servicePort, QByteArray data);
 
 private:
+    void displayPixmap(const QImage& image, const QString& timestamp);
     QLabel *m_imageView;
 };
 

@@ -1,21 +1,25 @@
+////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (c) 2014 richards-tech
+//  This file is part of SyntroPython
 //
-//  This file is part of SyntroNet
+//  Copyright (c) 2014, richards-tech
 //
-//  SyntroNet is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
+//  Permission is hereby granted, free of charge, to any person obtaining a copy of
+//  this software and associated documentation files (the "Software"), to deal in
+//  the Software without restriction, including without limitation the rights to use,
+//  copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+//  Software, and to permit persons to whom the Software is furnished to do so,
+//  subject to the following conditions:
 //
-//  SyntroNet is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
+//  The above copyright notice and this permission notice shall be included in all
+//  copies or substantial portions of the Software.
 //
-//  You should have received a copy of the GNU General Public License
-//  along with SyntroNet.  If not, see <http://www.gnu.org/licenses/>.
-//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+//  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+//  PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+//  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+//  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+//  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <Python.h>
 #include "SyntroPythonGlue.h"
@@ -95,6 +99,21 @@ static PyObject *displayImage(PyObject *self, PyObject *args)
     }
 
     syPyGlue.displayImage(image, length, width, height, timestamp);
+    Py_RETURN_NONE;
+}
+
+static PyObject *displayJpegImage(PyObject *self, PyObject *args)
+{
+    unsigned char *image;
+    int length;
+    char *timestamp;
+
+    if (!PyArg_ParseTuple(args, "s#s", &image, &length, &timestamp)) {
+        printf("Bad argument to displayJpegImage\n");
+        Py_RETURN_NONE;
+    }
+
+    syPyGlue.displayJpegImage(image, length, timestamp);
     Py_RETURN_NONE;
 }
 
@@ -409,11 +428,18 @@ static PyMethodDef SyntroPythonMethods[] = {
     "The function returns None"},
 
     {"displayImage", (PyCFunction)displayImage, METH_VARARGS,
-    "Displays an umcompressed image in the GUI window.\n"
+    "Displays an uncompressed image in the GUI window.\n"
     "There are four parameters:\n"
     "  image - the image as a string\n"
     "  width - the width of the image\n"
     "  height - the height of the image\n"
+    "  timestamp - a string containing the timestamp (can be empty)\n"
+    "The function returns None"},
+
+    {"displayJpegImage", (PyCFunction)displayJpegImage, METH_VARARGS,
+    "Displays a Jpeg image in the GUI window.\n"
+    "There are two parameters:\n"
+    "  image - the Jpeg image as a string\n"
     "  timestamp - a string containing the timestamp (can be empty)\n"
     "The function returns None"},
 

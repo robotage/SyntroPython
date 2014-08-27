@@ -1,21 +1,25 @@
+////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (c) 2014 richards-tech
+//  This file is part of SyntroPython
 //
-//  This file is part of SyntroNet
+//  Copyright (c) 2014, richards-tech
 //
-//  SyntroNet is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
+//  Permission is hereby granted, free of charge, to any person obtaining a copy of
+//  this software and associated documentation files (the "Software"), to deal in
+//  the Software without restriction, including without limitation the rights to use,
+//  copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+//  Software, and to permit persons to whom the Software is furnished to do so,
+//  subject to the following conditions:
 //
-//  SyntroNet is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
+//  The above copyright notice and this permission notice shall be included in all
+//  copies or substantial portions of the Software.
 //
-//  You should have received a copy of the GNU General Public License
-//  along with SyntroNet.  If not, see <http://www.gnu.org/licenses/>.
-//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+//  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+//  PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+//  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+//  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+//  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "SyntroPythonMainWindow.h"
 #include "SyntroUtils.h"
@@ -44,6 +48,9 @@ SyntroPythonMainWindow::SyntroPythonMainWindow(SyntroPythonGlue *glue)
 
     connect(this, SIGNAL(displayImageSignal(QByteArray,int,int,QString)),
             this, SLOT(displayImageSlot(QByteArray,int,int,QString)));
+
+    connect(this, SIGNAL(displayJpegImageSignal(QByteArray,QString)),
+            this, SLOT(displayJpegImageSlot(QByteArray,QString)));
 
     QWidget *centralWidget = new QWidget(this);
     QVBoxLayout *verticalLayout = new QVBoxLayout(centralWidget);
@@ -110,17 +117,34 @@ void SyntroPythonMainWindow::displayImage(QByteArray image,
     emit displayImageSignal(image, width, height, timestamp);
 }
 
+void SyntroPythonMainWindow::displayJpegImage(QByteArray image, QString timestamp)
+{
+    emit displayJpegImageSignal(image, timestamp);
+}
+
 void SyntroPythonMainWindow::displayImageSlot(QByteArray image,
                                               int width, int height, QString timestamp)
 {
-    resize(width, height);
     QImage qi((const uchar *)image.data(), width, height, QImage::Format_RGB888);
     QImage rgbImage = qi.rgbSwapped();
-    QPixmap pixmap = QPixmap::fromImage(rgbImage);
+    displayPixmap(rgbImage, timestamp);
+}
+
+void SyntroPythonMainWindow::displayJpegImageSlot(QByteArray image, QString timestamp)
+{
+    QImage img;
+    img.loadFromData(image, "JPEG");
+    displayPixmap(img, timestamp);
+}
+
+void SyntroPythonMainWindow::displayPixmap(const QImage& image, const QString& timestamp)
+{
+    QPixmap pixmap = QPixmap::fromImage(image);
 
     QPainter painter(&pixmap);
     painter.setPen(Qt::yellow);
-    painter.drawText(10, height - 10, timestamp);
+    painter.drawText(10, image.height() - 10, timestamp);
 
     m_imageView->setPixmap(pixmap);
+    resize(image.width(), image.height());
 }

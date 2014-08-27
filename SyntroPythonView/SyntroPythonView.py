@@ -1,34 +1,38 @@
 '''
-  Copyright (c) 2014 richards-tech
-
-  This file is part of SyntroNet
-
-  SyntroNet is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  SyntroNet is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with SyntroNet.  If not, see <http://www.gnu.org/licenses/>.
+////////////////////////////////////////////////////////////////////////////
+//
+//  This file is part of SyntroPython
+//
+//  Copyright (c) 2014, richards-tech
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy of 
+//  this software and associated documentation files (the "Software"), to deal in 
+//  the Software without restriction, including without limitation the rights to use, 
+//  copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the 
+//  Software, and to permit persons to whom the Software is furnished to do so, 
+//  subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in all 
+//  copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+//  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+//  PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+//  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
+//  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+//  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 '''
 
 # make the serviceName empty to find first source or else specify the path to the desired source
 # serviceName will be the host name of the source by default
 
-serviceName = ""
+serviceName = "tk1-2"
 
 # Now do the main imports
 
 import SyntroPython
 import SyntroPythonPy
 import sys
-import cv2
-import numpy
 import time
 
 # start SyntroPython running
@@ -47,8 +51,8 @@ sys.stdout.flush()
 
 # preset some global vars
 connected = False
-gotSource = False;
-servicePort = -1;
+gotSource = False
+servicePort = -1
 
 while(True):
     if (SyntroPython.isConnected()):
@@ -79,11 +83,9 @@ while(True):
             ret, timestamp, videoData, audioData = SyntroPython.getAVData(servicePort);
             if (ret):
                 if (videoData != None):
-                    numpyImage = numpy.frombuffer(videoData, dtype = 'uint8')
-                    image = cv2.imdecode(numpyImage, 1)
                     timestring = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(float(timestamp) / 1000.0)) + \
                         (".%03d" % (timestamp % 1000))
-                    SyntroPython.displayImage(image.tostring(), image.shape[1], image.shape[0], timestring)
+                    SyntroPython.displayJpegImage(videoData, timestring)
 
     else:
         if (connected):
