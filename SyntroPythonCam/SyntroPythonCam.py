@@ -73,9 +73,9 @@ while(True):
     if (ret):            
         # and display it
         if (jpeg):
-            SyntroPython.displayJpegImage(frame, "");
+            SyntroPython.displayJpegImage(frame, "")
         else:
-            SyntroPython.displayImage(frame, width, height, "");
+            SyntroPython.displayImage(frame, width, height, "")
         
         # now check if it can be sent on the SyntroLink
         if (SyntroPython.isServiceActive(servicePort) and SyntroPython.isClearToSend(servicePort)):

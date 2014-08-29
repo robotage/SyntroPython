@@ -47,9 +47,9 @@ The same comments apply to the "-j4" here.
 
 ### The sample scripts
 
-Once the libraries have been installed as described above, it's possible to try out the example scripts. There are two - 
-SyntroPythonCam and SyntroPythonView. These show the multicast capabilities of SyntroNet by generating and receiving a 
-multicast video stream. Multiple SyntroPythonViews can receive the same video stream from any SyntroPythonCam at any time.
+Once the libraries have been installed as described above, it's possible to try out the example scripts. There are three - 
+SyntroPythonCam (video streaming from a USB webcam), SyntroPythonPicam (video streaming from a Raspberry Pi with its camera) and SyntroPythonView (video stream viewer). These show the multicast capabilities of SyntroNet by generating and receiving a 
+multicast video stream. Multiple SyntroPythonViews can receive the same video stream from any SyntroPythonCam/Picam at any time.
 
 #### SyntroPythonCam
 
@@ -69,6 +69,20 @@ You can also just run the script in console only mode:
 	python SyntroPythonCam.py -c
 
 There is a performance advantage to running in console mode. Where possible, SyntroPython will try to capture jpeg frames from the camera and decompression is only necessary if the frames need to be displayed. Running in console mode avoids this.
+
+#### SyntroPythonPicam
+
+This is a version of SyntroPythonCam that uses the Raspberry Pi's camera rather than a USB webcam. It uses the picamera library so there is one extra pre-requisite:
+
+	sudo apt-get install python-picamera
+
+then:
+
+	python SyntroPythonPicam -c
+
+It's recommended to run in console mode (the '-c') as displaying the stream locally can overload the Pi.
+
+SyntroPythonPicam generates a standard SyntroNet MJPEG AVMUX stream. It works very well at 640 x 480 at frame rates up to 30fps. At larger frame sizes something bad happens after a few frames requiring a reboot. This is being investigated.
 	
 #### SyntroPythonView
 

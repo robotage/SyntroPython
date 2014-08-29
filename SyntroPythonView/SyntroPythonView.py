@@ -80,7 +80,7 @@ while(True):
             SyntroPython.setWindowTitle("Stream from " + serviceName)
            
         if (servicePort != -1):
-            ret, timestamp, videoData, audioData = SyntroPython.getAVData(servicePort);
+            ret, timestamp, videoData, audioData = SyntroPython.getAVData(servicePort)
             if (ret):
                 if (videoData != None):
                     timestring = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(float(timestamp) / 1000.0)) + \
