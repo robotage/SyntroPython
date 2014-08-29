@@ -78,7 +78,7 @@ This is a version of SyntroPythonCam that uses the Raspberry Pi's camera rather 
 
 then:
 
-	python SyntroPythonPicam -c
+	python SyntroPythonPicam.py -c
 
 It's recommended to run in console mode (the '-c') as displaying the stream locally can overload the Pi.
 
