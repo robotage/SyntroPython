@@ -159,7 +159,7 @@ SensorNetView is a viewer for the sensor data (not video - use SPView or SyntroV
 
     sudo apt-get install python-matplotlib
     
-The version of matplotlib in Raspbian is to old to run SensorNetView.py so something like an Ubuntu desktop would be the appropriate platform.
+The version of matplotlib in Raspbian is too old to run SensorNetView.py so something like an Ubuntu desktop would be the appropriate platform.
 
 Then:
 
