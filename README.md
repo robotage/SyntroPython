@@ -114,7 +114,7 @@ Note that in this simple implementation, the directory is only requested once wh
 
 #### SensorNetPoP
 
-SensorNetPoP allows a Raspberry Pi fitted with sensor hardware to act as a sensor node and a sensor network. Supported hardware sensors include:
+SensorNetPoP allows a Raspberry Pi fitted with sensor hardware to act as a sensor node in a sensor network. Supported hardware sensors include:
 
 * USB video camera
 * pi camera
@@ -126,7 +126,7 @@ More sensors will be added in the future. SensorNetPoP.py has many variables tha
 
 To run, there is one more pre-requisite:
 
-    sudo apt-get install smbus
+    sudo apt-get install python-smbus
     
 By default, the Raspberry Pi I2C is not enabled. To enable it, add the following lines to /etc/modules:
 
