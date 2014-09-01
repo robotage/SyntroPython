@@ -147,7 +147,7 @@ To avoid having to use sudo every time to run scripts using I2C, create a file /
     
 A reboot is required to get all this activated.
     
-Then:
+Then run SensorNetPoP in console mode:
 
 	cd ~/SyntroNet/SyntroPython/SensorNetPoP
 	python SensorNetPoP.py -c
@@ -164,7 +164,7 @@ The version of matplotlib in Raspbian is too old to run SensorNetView.py so some
 Then:
 
 	cd ~/SyntroNet/SyntroPython/SensorNetView
-	python SensorNetView.py -c
+	python SensorNetView.py
 
 No configuration is required for SensorNetView. Note that SensorNet uses SyntroNet so at least one SyntroControl must be running somewhere on the LAN. SensorNetView will automatically discover any active SensorNetPoPs and start displaying data. It will show the last 10 minutes of data with the standard configuration. If new SensorNetPoPs appear while SensorNetView is running, they will be discovered automatically too. If any SensorNetPoPs disappear, then their displays will be deleted.
 
