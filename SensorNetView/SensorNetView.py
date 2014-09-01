@@ -169,8 +169,8 @@ while(True):
  
 # Exiting so clean everything up.    
 
-for source in serviceMap.keys():
-    SyntroPython.removeService(serviceMap[source])
+for source in serviceNameMap.keys():
+    SyntroPython.removeService(serviceNameMap[source])
 
 SyntroPython.stop()
 print("Exiting")
