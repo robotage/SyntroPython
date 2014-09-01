@@ -72,7 +72,6 @@ SyntroPythonMainWindow::SyntroPythonMainWindow(SyntroPythonGlue *glue)
 
     verticalLayout->addWidget(m_imageView);
     setCentralWidget(centralWidget);
-    show();
 }
 
 void SyntroPythonMainWindow::addVidCapSignal(SyntroPythonVidCap *vidCap)

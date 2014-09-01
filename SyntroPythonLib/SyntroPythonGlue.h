@@ -39,7 +39,7 @@ public:
     bool vidCapGetFrame(int cameraNum, unsigned char** frame, int& length, bool& jpeg,
                                              int& width, int& height, int& rate);
 
-    void startLib(const char *productType, int& argc, char **argv);
+    void startLib(const char *productType, int& argc, char **argv, bool showWindow);
     void stopLib();
     void setWindowTitle(char *title);                       // sets the window title in GUI mode
     void displayImage(unsigned char *image, int length,

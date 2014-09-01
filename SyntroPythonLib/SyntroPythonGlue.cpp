@@ -45,7 +45,7 @@ SyntroPythonGlue::~SyntroPythonGlue()
         stopLib();
 }
 
-void SyntroPythonGlue::startLib(const char *productType, int& argc, char **argv)
+void SyntroPythonGlue::startLib(const char *productType, int& argc, char **argv, bool showWindow)
 {
     m_argc = argc;
     m_argv = argv;
@@ -58,6 +58,8 @@ void SyntroPythonGlue::startLib(const char *productType, int& argc, char **argv)
         QApplication a(m_argc, m_argv);
         SyntroUtils::loadStandardSettings(productType, a.arguments());
         m_main = new SyntroPythonMainWindow(this);
+        if (showWindow)
+            ((SyntroPythonMainWindow *)m_main)->show();
         a.exec();
     }
  }

@@ -1,0 +1,382 @@
+#!/usr/bin/python
+'''
+////////////////////////////////////////////////////////////////////////////
+//
+//  This file is part of SyntroPython
+//
+//  Copyright (c) 2014, richards-tech
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy of 
+//  this software and associated documentation files (the "Software"), to deal in 
+//  the Software without restriction, including without limitation the rights to use, 
+//  copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the 
+//  Software, and to permit persons to whom the Software is furnished to do so, 
+//  subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in all 
+//  copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+//  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+//  PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+//  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
+//  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+//  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+'''
+
+# camera parameters - change as required
+
+CAMERA_ENABLE = True
+CAMERA_USB = False
+CAMERA_INDEX = 0
+CAMERA_WIDTH = 640
+CAMERA_HEIGHT = 480
+CAMERA_RATE = 10
+
+import sys
+
+# import the sensor drivers
+sys.path.append('../SensorDrivers')
+import RT_ADXL345 as ADXL345
+import RT_TSL2561 as TSL2561
+import RT_TMP102 as TMP102
+
+# the sensor update interval (in seconds). Change as required.
+SENSOR_UPDATE_INTERVAL = 0.5
+
+# accel parameters - change as required
+ACCEL_ENABLE = True
+ACCEL_ADDR = ADXL345.ADXL345_ADDRESS_ALT_GND
+ACCEL_DATARATE = ADXL345.ADXL345_DATARATE_100_HZ
+ACCEL_RANGE = ADXL345.ADXL345_RANGE_8_G
+
+# light parameters - changes as required
+
+LIGHT_ENABLE = True
+LIGHT_ADDR = TSL2561.TSL2561_ADDRESS_ADDR_FLOAT
+LIGHT_INTEGRATIONTIME = TSL2561.TSL2561_TIMING_INTEG101
+
+# temperature parameters - change as required
+
+TEMPERATURE_ENABLE = True
+TEMPERATURE_ADDR = TMP102.TMP102_ADDRESS_AD0_VCC
+TEMPERATURE_SAMPLERATE = TMP102.TMP102_CONTROL_LOW_CR8
+
+# Now import what we need
+
+import SyntroPython
+import SyntroPythonPy
+import time
+import io
+import picamera
+import json
+import SensorJSON
+
+'''
+------------------------------------------------------------
+    User interface function
+'''
+
+def processUserInput():
+    ''' Process any user console input that might have arrived. 
+        Returns True if need to exit. '''
+       
+    c = SyntroPython.getConsoleInput()
+    if (c != None):
+        print("\n")
+        sc = chr(c)
+        if (sc == "x"):
+            return False
+        elif (sc == "s"):
+            print("Status:")
+            if (SyntroPython.isConnected()):
+                print("SyntroLink connected")
+            else:
+                print("SyntroLink closed")
+            if ACCEL_ENABLE:
+                data = accel.read()
+                print("Accel: x = %.2fg, y = %.2fg, z = %.2fg" % (data[0], data[1], data[2]))
+            if LIGHT_ENABLE:
+                print("Light: %.2f lux" % light.read())
+            if TEMPERATURE_ENABLE:
+                print("Temperature: %.2fC" % temperature.read())
+        elif (sc == 'h'):
+            print("Available commands are:")
+            print("  s - display status")
+            print("  x - exit")
+            
+        print("\nEnter command: "),
+        sys.stdout.flush()
+    return True
+    
+'''
+------------------------------------------------------------
+    Sensor functions
+'''
+
+# global to maintain last sensor read time
+lastSensorReadTime = time.time() 
+
+# global to maintain the sensor service port
+sensorPort = -1
+
+def initSensors():
+    ''' Initialize the sensors and establish the sensor multicast source port '''
+    global sensorPort
+    
+    sensorPort = SyntroPython.addMulticastSource(SyntroPythonPy.SYNTRO_STREAMNAME_SENSOR)
+    if (sensorPort == -1):
+        print("Failed to activate sensor service")
+        SyntroPython.stop()
+        sys.exit()
+
+    if ACCEL_ENABLE:
+        accel.setRange(ACCEL_RANGE)
+        accel.setDataRate(ACCEL_DATARATE)
+        accel.enable()
+        
+    if LIGHT_ENABLE:
+        light.setIntegrationTime(LIGHT_INTEGRATIONTIME)
+        light.enable()
+        
+    if TEMPERATURE_ENABLE:
+        temperature.setSampleRate(TEMPERATURE_SAMPLERATE)
+        temperature.enable()
+
+def readSensors():
+    global lastSensorReadTime
+    global sensorPort 
+    
+    if ((time.time() - lastSensorReadTime) < SENSOR_UPDATE_INTERVAL):
+        return
+        
+    # time send send the sensor readings    
+    lastSensorReadTime = time.time()
+    
+    sensorDict = {}
+    
+    sensorDict[SensorJSON.TIMESTAMP] = time.time()
+    
+    if ACCEL_ENABLE:
+        accelData = accel.read()
+        sensorDict[SensorJSON.ACCEL_DATA] = accelData
+        
+    if LIGHT_ENABLE:
+        lightData = light.read()
+        sensorDict[SensorJSON.LIGHT_DATA] = lightData
+
+    if TEMPERATURE_ENABLE:
+        temperatureData = temperature.read()
+        sensorDict[SensorJSON.TEMPERATURE_DATA] = temperatureData
+
+    if (SyntroPython.isServiceActive(sensorPort) and SyntroPython.isClearToSend(sensorPort)):
+        SyntroPython.sendMulticastData(sensorPort, json.dumps(sensorDict))    
+
+
+'''
+------------------------------------------------------------
+    USB camera functions and main loop
+'''
+
+def USBCameraLoop():
+    ''' This is the main loop when the USB camera is enabled. '''
+    
+    # Open the camera device
+    if (not SyntroPython.vidCapOpen(CAMERA_INDEX, CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_RATE)):
+        print("Failed to open USB camera")
+        SyntroPython.stop()
+        sys.exit()
+
+    # Activate the video stream
+    videoPort = SyntroPython.addMulticastSource(SyntroPythonPy.SYNTRO_STREAMNAME_AVMUX)
+    if (videoPort == -1):
+        print("Failed to activate video service")
+        SyntroPython.stop()
+        sys.exit()
+
+    while True:
+        # try to get a frame from the USB camera
+        ret, frame, jpeg, width, height, rate = SyntroPython.vidCapGetFrame(CAMERA_INDEX)
+        if (ret):            
+            # check if it can be sent on the SyntroLink
+            if (SyntroPython.isServiceActive(videoPort) and SyntroPython.isClearToSend(videoPort)):
+                # send the frame
+                SyntroPython.setVideoParams(width, height, rate)
+                pcm = str("")
+                if (jpeg):
+                    SyntroPython.sendJpegAVData(videoPort, frame, pcm)
+                else:
+                    SyntroPython.sendAVData(videoPort, frame, pcm)
+                    
+        # check if anything from the sensors            
+        readSensors()
+        
+        # handle user input
+        if (not processUserInput()):
+            break;
+            
+        #give other things a chance
+        time.sleep(0.02)
+               
+    # exiting            
+    SyntroPython.removeService(videoPort)
+
+'''
+------------------------------------------------------------
+    pi camera functions and main loop
+'''
+
+# this is used to track when we have a new frame
+piCameraLastFrameIndex = -1
+
+def piCameraSendFrameHelper(stream, frame, videoPort):
+    ''' do the actual frame processing '''
+    global piCameraLastFrameIndex
+    
+    # record index of new frame
+    piCameraLastFrameIndex = frame.index
+
+    # get the frame data and display it
+    stream.seek(frame.position)
+    image = stream.read(frame.frame_size)
+
+    # now check if it can be sent on the SyntroLink
+    if (SyntroPython.isServiceActive(videoPort) and SyntroPython.isClearToSend(videoPort)):
+        # send the frame
+        pcm = str("")
+        SyntroPython.sendJpegAVData(videoPort, image, pcm)
+    
+
+def piCameraSendFrame(stream, videoPort):
+    ''' sendFrame checks the circular buffer to see if there is a new frame
+    and send it on the SyntroLink if that's possible '''
+
+    global piCameraLastFrameIndex
+
+    with stream.lock:
+        if (CAMERA_RATE > 10):
+            for frame in stream.frames:
+                if (frame.index > piCameraLastFrameIndex):
+                    piCameraSendFrameHelper(stream, frame, videoPort)
+        else:
+            # skip to last frame in iteration
+            frame = None
+            for frame in stream.frames:
+                pass
+ 
+            if (frame is None):
+                return
+         
+            # check to see if this is new
+            if (frame.index == piCameraLastFrameIndex):
+                return
+            piCameraSendFrameHelper(stream, frame, videoPort)
+        
+ 
+def piCameraLoop():
+    ''' This is the main loop when the pi camera is enabled. '''
+    # Activate the video stream
+    videoPort = SyntroPython.addMulticastSource(SyntroPythonPy.SYNTRO_STREAMNAME_AVMUX)
+    if (videoPort == -1):
+        print("Failed to activate video service")
+        SyntroPython.stop()
+        sys.exit()
+
+    # Tell the library what video params we are using
+    SyntroPython.setVideoParams(CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_RATE)
+
+    with picamera.PiCamera(CAMERA_INDEX) as camera:
+        camera.resolution = (CAMERA_WIDTH, CAMERA_HEIGHT)
+        camera.framerate = (CAMERA_RATE, 1)
+
+        # need enough buffering to overcome any latency
+        stream = picamera.PiCameraCircularIO(camera, seconds = 1)
+
+        # start recoding in mjpeg mode
+        camera.start_recording(stream, format = 'mjpeg')
+
+        try:
+            while(True):
+                # process any new frames
+                camera.wait_recording(0)
+                piCameraSendFrame(stream, videoPort)
+                
+                # see if anythng new from the sensors
+                readSensors()
+                
+                # handle user input
+                if (not processUserInput()):
+                    break;
+                    
+                #give other things a chance
+                time.sleep(0.02)
+  
+        finally:
+            camera.stop_recording()
+            SyntroPython.removeService(videoPort)
+
+'''
+------------------------------------------------------------
+    No camera main loop
+'''
+
+
+def noCameraLoop():
+    ''' This is the main loop when no camera is running. '''
+
+    while True:
+        # see if anything from the sensors
+        readSensors()
+        
+        # handle any user input
+        if (not processUserInput()):
+            break;
+            
+        # give other things a chance
+        time.sleep(0.02)
+
+'''
+------------------------------------------------------------
+    Main code
+'''
+
+
+# start SyntroPython running
+SyntroPython.start("SensorNetPoP", sys.argv, False)
+
+# this delay is necessary to allow Qt startup to complete
+time.sleep(1)
+
+# put console into single character mode
+SyntroPython.startConsoleInput()
+
+# set the title if in GUI mode
+SyntroPython.setWindowTitle(SyntroPython.getAppName() + " camera stream")
+
+# wake up the console
+print("SensorNetPoP starting...")
+print("Enter command: "),
+sys.stdout.flush()
+
+# the sensor objects
+if ACCEL_ENABLE:
+    accel = ADXL345.RT_ADXL345(ACCEL_ADDR)
+if LIGHT_ENABLE:
+    light = TSL2561.RT_TSL2561(LIGHT_ADDR)
+if TEMPERATURE_ENABLE:
+    temperature = TMP102.RT_TMP102(TEMPERATURE_ADDR)
+
+initSensors()
+
+if CAMERA_ENABLE:
+    if CAMERA_USB:
+        USBCameraLoop()
+    else:
+        piCameraLoop()
+else:
+    noCameraLoop()
+
+# Exiting so clean everything up.    
+
+SyntroPython.stop()
+print("Exiting")

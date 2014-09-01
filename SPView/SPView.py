@@ -23,14 +23,12 @@
 //  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 '''
 
-# camera parameters - change as required
+# make the serviceName empty to find first source or else specify the path to the desired source
+# serviceName will be the host name of the source by default
 
-CAMERA_INDEX = 0
-CAMERA_WIDTH = 640
-CAMERA_HEIGHT = 480
-CAMERA_RATE = 10
+serviceName = ""
 
-# Now onto the real stuff
+# Now do the main imports
 
 import SyntroPython
 import SyntroPythonPy
@@ -38,55 +36,63 @@ import sys
 import time
 
 # start SyntroPython running
-SyntroPython.start("SyntroPythonCam", sys.argv)
+SyntroPython.start("SPView", sys.argv, True)
 
 # this delay is necessary to allow Qt startup to complete
 time.sleep(1)
 
-# Open the camera device
-if (not SyntroPython.vidCapOpen(CAMERA_INDEX, CAMERA_WIDTH, CAMERA_HEIGHT, CAMERA_RATE)):
-    print("Failed to open vidcap")
-    SyntroPython.stop()
-    sys.exit()
-
 # put console into single character mode
 SyntroPython.startConsoleInput()
 
-# set the title if in GUI mode
-SyntroPython.setWindowTitle(SyntroPython.getAppName() + " camera stream")
-
 # wake up the console
-print("SyntroPythonCam starting...")
+print("SPView starting...")
 print("Enter command: "),
 sys.stdout.flush()
 
-# Activate the stream
-servicePort = SyntroPython.addMulticastSource(SyntroPythonPy.SYNTRO_STREAMNAME_AVMUX)
-if (servicePort == -1):
-    print("Failed to activate video service")
-    SyntroPython.stop()
-    sys.exit()
+# preset some global vars
+connected = False
+gotSource = False
+servicePort = -1
 
 while(True):
-    # get a frame from the camera
-    ret, frame, jpeg, width, height, rate = SyntroPython.vidCapGetFrame(CAMERA_INDEX)
-    if (ret):            
-        # and display it
-        if (jpeg):
-            SyntroPython.displayJpegImage(frame, "")
-        else:
-            SyntroPython.displayImage(frame, width, height, "")
+    # give other things a chance
+    time.sleep(0.02)
+    if (SyntroPython.isConnected()):
+        # do connected state processing
+        if (not connected):
+            # see if we need to get the directory or if the name is fixed
+            if (serviceName == ""):
+                SyntroPython.requestDirectory()
+            connected = True
+            
+        # see if we are waiting to get service path
         
-        # now check if it can be sent on the SyntroLink
-        if (SyntroPython.isServiceActive(servicePort) and SyntroPython.isClearToSend(servicePort)):
-            # send the frame
-            SyntroPython.setVideoParams(width, height, rate)
-            pcm = str("")
-            if (jpeg):
-                SyntroPython.sendJpegAVData(servicePort, frame, pcm)
-            else:
-                SyntroPython.sendAVData(servicePort, frame, pcm)
-                    
+        if (serviceName == ""):
+            sourceList = SyntroPython.lookupMulticastSources(SyntroPythonPy.SYNTRO_STREAMNAME_AVMUX)
+            if (len(sourceList) > 0):
+                sources = sourceList.splitlines()
+                serviceName = sources[0]
+            
+        # see if we need to activate the service
+        
+        if ((serviceName != "") and (servicePort == -1)):
+            servicePort = SyntroPython.addMulticastSink(serviceName + 
+                    SyntroPythonPy.SYNTRO_SERVICEPATH_SEP + SyntroPythonPy.SYNTRO_STREAMNAME_AVMUX)
+            # set the title if in GUI mode
+            SyntroPython.setWindowTitle("Stream from " + serviceName)
+           
+        if (servicePort != -1):
+            ret, timestamp, videoData, audioData = SyntroPython.getAVData(servicePort)
+            if (ret):
+                if (videoData != None):
+                    timestring = time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(float(timestamp) / 1000.0)) + \
+                        (".%03d" % (timestamp % 1000))
+                    SyntroPython.displayJpegImage(videoData, timestring)
+
+    else:
+        if (connected):
+            connected = False
+      
     # process any user console input that might have arrived.   
        
     c = SyntroPython.getConsoleInput()
@@ -95,14 +101,18 @@ while(True):
         sc = chr(c)
         if (sc == "x"):
             break
+        elif (sc == "d"):
+            print("*** Source directory:")
+            print(SyntroPython.lookupMulticastSources(SyntroPythonPy.SYNTRO_STREAMNAME_AVMUX))
         elif (sc == "s"):
             print("Status:")
-            if (SyntroPython.isConnected()):
+            if (connected):
                 print("SyntroLink connected")
             else:
                 print("SyntroLink closed")
         elif (sc == 'h'):
             print("Available commands are:")
+            print("  d - display list of sources")
             print("  s - display status")
             print("  x - exit")
             
@@ -111,7 +121,7 @@ while(True):
     
 # Exiting so clean everything up.    
 
-SyntroPython.vidCapClose(CAMERA_INDEX)
-SyntroPython.removeService(servicePort)
+if (servicePort != -1):
+    SyntroPython.removeService(servicePort)
 SyntroPython.stop()
 print("Exiting")

@@ -75,7 +75,7 @@ def sendFrame(stream):
             SyntroPython.sendJpegAVData(servicePort, image, pcm)
 
 # start SyntroPython running
-SyntroPython.start("SyntroPythonPicam", sys.argv)
+SyntroPython.start("SPPicam", sys.argv, True)
 
 # this delay is necessary to allow Qt startup to complete
 time.sleep(1)
@@ -87,7 +87,7 @@ SyntroPython.startConsoleInput()
 SyntroPython.setWindowTitle(SyntroPython.getAppName() + " camera stream")
 
 # wake up the console
-print("SyntroPythonPicam starting...")
+print("SPPicam starting...")
 print("Enter command: "),
 sys.stdout.flush()
 
