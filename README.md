@@ -141,7 +141,7 @@ It's worth setting the I2C speed to 400kHz at this time so create a file /etc/mo
 
     options i2c_bcm2708 baudrate=400000
     
-To avoid having to use sudo every time to run scripts using I2C, create a file /etc/udev.d/90-i2c.rules and add the line:
+To avoid having to use sudo every time to run scripts using I2C, create a file /etc/udev/rules.d/90-i2c.rules and add the line:
 
     KERNEL=="i2c-[0-7]",MODE="0666"
     

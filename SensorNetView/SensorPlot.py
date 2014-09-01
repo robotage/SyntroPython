@@ -103,12 +103,7 @@ class SensorPlot():
                  
     def __init__(self):
         ''' Sets up the sensor plot '''
-    
         plt.ion()
-#        fig, axarr = plt.subplots(3, sharex = True)
-#        self.figures.append(fig)
-#        self.axes.append(axarr)
-#        plt.subplots_adjust(hspace = 0.4)
        
     def plot(self, sensors):
         ''' Plots the data in the list of sensors '''
