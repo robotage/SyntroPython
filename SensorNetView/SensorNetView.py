@@ -41,7 +41,7 @@ import SyntroPythonPy
 import time
 import json
 import SensorJSON
-import Sensor
+import SensorRecords
 import SensorPlot
 
 # The service name map contains the mapping between service name and service port
@@ -72,8 +72,7 @@ def processDirectory():
             if (servicePort != -1):
                 # successfully activated source so add to serviceMap
                 serviceNameMap[source] = servicePort
-                servicePortMap[servicePort] = Sensor.Sensor(source, servicePort)
-                print("Added source %s" % source)
+                servicePortMap[servicePort] = SensorRecords.SensorRecords(source, servicePort)
                 
     # check for sources that have gone away
     for source in serviceNameMap.keys():
@@ -84,7 +83,6 @@ def processDirectory():
             servicePort = serviceNameMap.pop(source)
             SyntroPython.removeService(servicePort)
             servicePortMap.pop(servicePort)
-            print("Removed source %s" % source)
     
     
 def processSensorData():

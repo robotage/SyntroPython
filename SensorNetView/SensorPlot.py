@@ -26,12 +26,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-import Sensor
+import SensorRecords
 
 class SensorPlot():
     
     # this is used to provide the x axis data for the plots
-    xAxis = np.arange(-Sensor.SENSOR_RECORD_LENGTH, 0, 1)
+    xAxis = np.arange(-SensorRecords.SENSOR_RECORD_LENGTH, 0, 1)
     
     # this list contains the active figures (one per sensor)
     figures = []
@@ -45,10 +45,11 @@ class SensorPlot():
         
         if (figNumber == len(self.figures)):
             # need to add a figure
-            fig, axarr = plt.subplots(3, sharex = True)
+            fig, axarr = plt.subplots(5, sharex = True)
             self.figures.append(fig)
             self.axes.append(axarr)
-            fig.subplots_adjust(hspace = 0.4)
+            fig.subplots_adjust(hspace = 0.5)
+            fig.set_size_inches(8, 10, forward=True)
        
         # now ready to actually draw the charts
        
@@ -100,6 +101,32 @@ class SensorPlot():
                 
         axarr[2].legend(loc='upper center', shadow=True, fontsize='x-small')
         axarr[2].set_title("Temperature data")
+                 
+        #do pressure plot 
+        axarr[3].clear()
+        axarr[3].set_ylim(800, 1200)
+        if (sensor.getPressureValid()):
+            axarr[3].plot(self.xAxis, sensor.getPressureData(), 'b-', 
+                           label = 'Pressure (%.2f hPa)' % sensor.getCurrentPressureData())
+        else:
+            axarr[3].plot(self.xAxis, sensor.getPressureData(), 'b-', 
+                           label = 'No data')
+                
+        axarr[3].legend(loc='upper center', shadow=True, fontsize='x-small')
+        axarr[3].set_title("Pressure data")
+                 
+        #do humidity plot 
+        axarr[4].clear()
+        axarr[4].set_ylim(0, 100)
+        if (sensor.getHumidityValid()):
+            axarr[4].plot(self.xAxis, sensor.getHumidityData(), 'b-', 
+                           label = 'Humidity (%.2f %%RH)' % sensor.getCurrentHumidityData())
+        else:
+            axarr[4].plot(self.xAxis, sensor.getHumidityData(), 'b-', 
+                           label = 'No data')
+                
+        axarr[4].legend(loc='upper center', shadow=True, fontsize='x-small')
+        axarr[4].set_title("Humidity data")
                  
     def __init__(self):
         ''' Sets up the sensor plot '''

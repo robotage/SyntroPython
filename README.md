@@ -121,8 +121,13 @@ SensorNetPoP allows a Raspberry Pi fitted with sensor hardware to act as a senso
 * ADXL345 accelerometer
 * TSL2561 light sensor
 * TMP102 temperature sensor
+* MCP9808 temperature sensor
+* BMP180 pressure/temperature sensor
+* HTU21D-F humidity/temperature sensor
 
-More sensors will be added in the future. SensorNetPoP.py has many variables that can be used to configure the hardware setup. Choose between USB camera, pi camera or no camera. Enable or disable specific sensors and configure their hardware addresses.
+SensorNetPoP.py has many variables that can be used to configure the hardware setup. Choose between USB camera, pi camera or no camera. Enable or disable specific sensors and configure their hardware addresses. Different PoPs in a SensorNet can have different mixes of sensors - it's all handled automatically. Plus it's easy to add new ones.
+
+The default I2C addresses have been set up to work with the relevant Adafruit breakout boards just by wiring up GND, VDD, SDA and SCL and leaving all other pins open. So it's really easy to build the hardware too.
 
 To run, there is one more pre-requisite:
 

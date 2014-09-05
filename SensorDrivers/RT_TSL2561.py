@@ -25,7 +25,8 @@
 //  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 '''
 
-from Adafruit_I2C import Adafruit_I2C
+from RT_I2C import RT_I2C
+from RT_NullSensor import RT_NullSensor
 
 # hardware defs
 
@@ -79,15 +80,22 @@ TSL2561_SCALE_402 = (1.0)
 
 TSL2561_INTERRUPT_LEVEL = 0x10        # level interrupt mode enable
 
-class RT_TSL2561(Adafruit_I2C):
+class RT_TSL2561(RT_NullSensor):
     ''' richards-tech driver for the TSL2561 light sensor '''
     
-    def __init__(self, addr, busnum=-1, debug=False):
-        # check for the presence of the light sensor
-        self.light = Adafruit_I2C(addr, busnum, debug)
+    def __init__(self):
+        RT_NullSensor.__init__(self)
         self.integrationTime = TSL2561_TIMING_INTEG101
-       
-    def enable(self):
+        self.addr = TSL2561_ADDRESS_ADDR_FLOAT
+        self.sensorValid = True
+      
+    def enable(self, busnum=-1, debug=False):
+        # check if already enabled
+        if (self.dataValid):
+            return
+
+        # check for the presence of the light sensor
+        self.light = RT_I2C(self.addr, busnum, debug)
         # start the light sensor running
         command = TSL2561_COMMAND_CMD | TSL2561_CONTROL 
         param = TSL2561_CONTROL_POWERUP
@@ -95,12 +103,13 @@ class RT_TSL2561(Adafruit_I2C):
         command = TSL2561_COMMAND_CMD | TSL2561_TIMING 
         param = TSL2561_TIMING_GAIN16x | self.integrationTime
         self.light.write8(command, param)
-        
+        self.dataValid = True
+       
     def setIntegrationTime(self, integrationTime):
         self.integrationTime = integrationTime
 
     # Read the sensor
-    def read(self):
+    def readLight(self):
         ''' returns light level in Lux '''
         command = TSL2561_COMMAND_CMD | TSL2561_COMMAND_WORD | TSL2561_DATA0LOW
         adc0 = self.light.readList(command, 2)
@@ -118,7 +127,7 @@ class RT_TSL2561(Adafruit_I2C):
         if ((0 < ratio) and (ratio <= 0.5)):
             return 0.0304 * ch0 - 0.062 * ch0 * pow(ratio, 1.4)
         elif ((0.5 < ratio) and (ratio <= 0.61)):
-            return 0.224 * ch0 - 0.31 * ch1
+            return 0.0224 * ch0 - 0.031 * ch1
         elif ((0.61 < ratio) and (ratio <= 0.8)):
             return 0.0128 * ch0 - 0.0153 * ch1
         elif ((0.8 < ratio) and (ratio <= 1.3)):

@@ -25,7 +25,8 @@
 //  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 '''
 
-from Adafruit_I2C import Adafruit_I2C
+from RT_I2C import RT_I2C
+from RT_NullSensor import RT_NullSensor
 
 # hardware defs
 
@@ -57,26 +58,33 @@ TMP102_CONTROL_HIGH_TM = 0x2                              # sets interrupt for t
 TMP102_CONTROL_HIGH_POL = 0x40                            # polarity mode
 TMP102_CONTROL_HIGH_OS = 0x80                             # enables one shot mode
 
-class RT_TMP102(Adafruit_I2C):
+class RT_TMP102(RT_NullSensor):
     ''' richards-tech driver for the TMP102 temperature sensor '''
     
-    def __init__(self, addr, busnum=-1, debug=False):
-        # set up the I2C for the temp sensor
-        self.temp = Adafruit_I2C(addr, busnum, debug)
-        self.tempRate = TMP102_CONTROL_LOW_CR8
+    def __init__(self):
+        RT_NullSensor.__init__(self)
+        self.addr = TMP102_ADDRESS_AD0_VCC
+        self.sensorValid = True
+ 
+    def enable(self, busnum=-1, debug=False):
+        # check if already enabled
+        if (self.dataValid):
+            return
 
-    def enable(self):
         # enable the temp sensor
+        self.temp = RT_I2C(self.addr, busnum, debug)
+        self.tempRate = TMP102_CONTROL_LOW_CR8
         control = [0, 0]
         control[1] = self.tempRate | TMP102_CONTROL_LOW_EM
         control[0] = 0
         self.temp.writeList(TMP102_CONTROL, control)
+        self.dataValid = True
         
     def setSampleRate(self, sampleRate):
         # set the sample rate
         self.tempRate = sampleRate
 
-    def read(self):
+    def readTemperature(self):
         # read the sensor - returns temperature in degrees C
         val = self.temp.readList(TMP102_DATA, 2)       
         res = (val[0] << 5) | (val[1] >> 3)

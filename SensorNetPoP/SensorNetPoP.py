@@ -27,7 +27,7 @@
 # camera parameters - change as required
 
 CAMERA_ENABLE = True
-CAMERA_USB = False
+CAMERA_USB = True
 CAMERA_INDEX = 0
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
@@ -37,30 +37,25 @@ import sys
 
 # import the sensor drivers
 sys.path.append('../SensorDrivers')
-import RT_ADXL345 as ADXL345
-import RT_TSL2561 as TSL2561
-import RT_TMP102 as TMP102
+import RT_ADXL345
+import RT_TSL2561
+import RT_TMP102
+import RT_BMP180
+import RT_MCP9808
+import RT_HTU21D
+import RT_NullSensor
 
 # the sensor update interval (in seconds). Change as required.
 SENSOR_UPDATE_INTERVAL = 0.5
 
-# accel parameters - change as required
-ACCEL_ENABLE = True
-ACCEL_ADDR = ADXL345.ADXL345_ADDRESS_ALT_GND
-ACCEL_DATARATE = ADXL345.ADXL345_DATARATE_100_HZ
-ACCEL_RANGE = ADXL345.ADXL345_RANGE_8_G
+# The set of sensors. Choose which ones are required or use NullSensor if no physical sensor
+# Multi sensor objects (such as BMP180 for temp and pressure) can be reused
 
-# light parameters - changes as required
-
-LIGHT_ENABLE = True
-LIGHT_ADDR = TSL2561.TSL2561_ADDRESS_ADDR_FLOAT
-LIGHT_INTEGRATIONTIME = TSL2561.TSL2561_TIMING_INTEG101
-
-# temperature parameters - change as required
-
-TEMPERATURE_ENABLE = True
-TEMPERATURE_ADDR = TMP102.TMP102_ADDRESS_AD0_VCC
-TEMPERATURE_SAMPLERATE = TMP102.TMP102_CONTROL_LOW_CR8
+accel = RT_ADXL345.RT_ADXL345()
+light = RT_TSL2561.RT_TSL2561()
+temperature = RT_HTU21D.RT_HTU21D()
+pressure = RT_BMP180.RT_BMP180()
+humidity = temperature
 
 # Now import what we need
 
@@ -93,13 +88,17 @@ def processUserInput():
                 print("SyntroLink connected")
             else:
                 print("SyntroLink closed")
-            if ACCEL_ENABLE:
-                data = accel.read()
+            if accel.getDataValid():
+                data = accel.readAccel()
                 print("Accel: x = %.2fg, y = %.2fg, z = %.2fg" % (data[0], data[1], data[2]))
-            if LIGHT_ENABLE:
-                print("Light: %.2f lux" % light.read())
-            if TEMPERATURE_ENABLE:
-                print("Temperature: %.2fC" % temperature.read())
+            if light.getDataValid():
+                print("Light: %.2f lux" % light.readLight())
+            if temperature.getDataValid():
+                print("Temperature: %.2fC" % temperature.readTemperature())
+            if pressure.getDataValid():
+                print("Pressure: %.2fhPa" % pressure.readPressure())
+            if humidity.getDataValid():
+                print("Humidity: %.2f%%RH" % humidity.readHumidity())
         elif (sc == 'h'):
             print("Available commands are:")
             print("  s - display status")
@@ -130,24 +129,23 @@ def initSensors():
         SyntroPython.stop()
         sys.exit()
 
-    if ACCEL_ENABLE:
-        accel.setRange(ACCEL_RANGE)
-        accel.setDataRate(ACCEL_DATARATE)
-        accel.enable()
-        
-    if LIGHT_ENABLE:
-        light.setIntegrationTime(LIGHT_INTEGRATIONTIME)
-        light.enable()
-        
-    if TEMPERATURE_ENABLE:
-        temperature.setSampleRate(TEMPERATURE_SAMPLERATE)
-        temperature.enable()
+    accel.enable()
+    light.enable()
+    temperature.enable()
+    pressure.enable()
+    humidity.enable()
 
 def readSensors():
     global lastSensorReadTime
     global sensorPort 
     
     if ((time.time() - lastSensorReadTime) < SENSOR_UPDATE_INTERVAL):
+        # call background loops
+        accel.background()
+        light.background()
+        temperature.background()
+        pressure.background()
+        humidity.background()
         return
         
     # time send send the sensor readings    
@@ -157,17 +155,25 @@ def readSensors():
     
     sensorDict[SensorJSON.TIMESTAMP] = time.time()
     
-    if ACCEL_ENABLE:
-        accelData = accel.read()
+    if accel.getDataValid():
+        accelData = accel.readAccel()
         sensorDict[SensorJSON.ACCEL_DATA] = accelData
         
-    if LIGHT_ENABLE:
-        lightData = light.read()
+    if light.getDataValid():
+        lightData = light.readLight()
         sensorDict[SensorJSON.LIGHT_DATA] = lightData
 
-    if TEMPERATURE_ENABLE:
-        temperatureData = temperature.read()
+    if temperature.getDataValid():
+        temperatureData = temperature.readTemperature()
         sensorDict[SensorJSON.TEMPERATURE_DATA] = temperatureData
+
+    if pressure.getDataValid():
+        pressureData = pressure.readPressure()
+        sensorDict[SensorJSON.PRESSURE_DATA] = pressureData
+        
+    if humidity.getDataValid():
+        humidityData = humidity.readHumidity()
+        sensorDict[SensorJSON.HUMIDITY_DATA] = humidityData
 
     if (SyntroPython.isServiceActive(sensorPort) and SyntroPython.isClearToSend(sensorPort)):
         SyntroPython.sendMulticastData(sensorPort, json.dumps(sensorDict))    
@@ -357,14 +363,6 @@ SyntroPython.setWindowTitle(SyntroPython.getAppName() + " camera stream")
 print("SensorNetPoP starting...")
 print("Enter command: "),
 sys.stdout.flush()
-
-# the sensor objects
-if ACCEL_ENABLE:
-    accel = ADXL345.RT_ADXL345(ACCEL_ADDR)
-if LIGHT_ENABLE:
-    light = TSL2561.RT_TSL2561(LIGHT_ADDR)
-if TEMPERATURE_ENABLE:
-    temperature = TMP102.RT_TMP102(TEMPERATURE_ADDR)
 
 initSensors()
 

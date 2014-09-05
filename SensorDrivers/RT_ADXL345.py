@@ -47,7 +47,8 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-from Adafruit_I2C import Adafruit_I2C
+from RT_I2C import RT_I2C
+from RT_NullSensor import RT_NullSensor
 
 ADXL345_ADDRESS_ALT_GND  = 0x53
 ADXL345_ADDRESS_ALT_VCC  = 0x1d
@@ -80,17 +81,25 @@ ADXL345_RANGE_4_G        = 0x01 # +/-  4g
 ADXL345_RANGE_8_G        = 0x02 # +/-  8g
 ADXL345_RANGE_16_G       = 0x03 # +/- 16g
 
-class RT_ADXL345(Adafruit_I2C):
+class RT_ADXL345(RT_NullSensor):
 
-    def __init__(self, addr, busnum=-1, debug=False):
+    def __init__(self):
+        RT_NullSensor.__init__(self)
+        # set default address
+        self.addr = ADXL345_ADDRESS_ALT_GND
+        self.sensorValid = True
+            
+    def enable(self, busnum=-1, debug=False):
+        # check if already enabled
+        if (self.dataValid):
+            return
         # check for the presence of the accel
-        self.accel = Adafruit_I2C(addr, busnum, debug)
+        self.accel = RT_I2C(self.addr, busnum, debug)
 
         if self.accel.readU8(ADXL345_REG_DEVID) != 0xE5:
             print("ADXL345 not found")
-            
-    def enable(self):
         self.accel.write8(ADXL345_REG_POWER_CTL, 0x08)
+        self.dataValid = True
 
     def setRange(self, range):
         # Read the data format register to preserve bits.  Update the data
@@ -116,7 +125,7 @@ class RT_ADXL345(Adafruit_I2C):
 
 
     # Read the accelerometer
-    def read(self):
+    def readAccel(self):
         raw = self.accel.readList(ADXL345_REG_DATAX0, 6)
         res = []
         for i in range(0, 6, 2):
