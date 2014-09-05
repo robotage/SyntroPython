@@ -27,7 +27,11 @@
 # camera parameters - change as required
 
 CAMERA_ENABLE = True
-CAMERA_USB = True
+
+# If CAMERA_USB is true, expects a webcam
+# If False, expects a Pi camera
+CAMERA_USB = False
+
 CAMERA_INDEX = 0
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
