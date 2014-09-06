@@ -41,6 +41,7 @@ public:
 
     void startLib(const char *productType, int& argc, char **argv, bool showWindow);
     void stopLib();
+    bool checkDaemonMode() { return m_daemonMode;}          // checks if in daemon mode
     void setWindowTitle(char *title);                       // sets the window title in GUI mode
     void displayImage(unsigned char *image, int length,
                       int width, int height, char *timestamp); // displays an image in GUI mode
@@ -87,6 +88,7 @@ private:
 
     bool m_connected;
     bool m_directoryRequested;
+    bool m_daemonMode;
 
     int m_argc;
     char **m_argv;

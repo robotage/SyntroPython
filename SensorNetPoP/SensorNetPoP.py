@@ -78,8 +78,11 @@ import SensorJSON
 
 def processUserInput():
     ''' Process any user console input that might have arrived. 
-        Returns True if need to exit. '''
-       
+        Returns False if need to exit. '''
+    
+    # see if in daemon mode. if so, just return
+    if SyntroPython.checkDaemonMode():
+        return True
     c = SyntroPython.getConsoleInput()
     if (c != None):
         print("\n")
@@ -357,16 +360,15 @@ SyntroPython.start("SensorNetPoP", sys.argv, False)
 # this delay is necessary to allow Qt startup to complete
 time.sleep(1)
 
-# put console into single character mode
-SyntroPython.startConsoleInput()
+if not SyntroPython.checkDaemonMode():
+    # put console into single character mode
+    SyntroPython.startConsoleInput()
+    print("SensorNetPoP starting...")
+    print("Enter command: "),
+    sys.stdout.flush()
 
 # set the title if in GUI mode
 SyntroPython.setWindowTitle(SyntroPython.getAppName() + " camera stream")
-
-# wake up the console
-print("SensorNetPoP starting...")
-print("Enter command: "),
-sys.stdout.flush()
 
 initSensors()
 
@@ -381,4 +383,5 @@ else:
 # Exiting so clean everything up.    
 
 SyntroPython.stop()
-print("Exiting")
+if not SyntroPython.checkDaemonMode():
+    print("Exiting")

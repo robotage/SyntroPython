@@ -73,6 +73,12 @@ static PyObject *stop(PyObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+static PyObject *checkDaemonMode(PyObject *self, PyObject *args)
+{
+    bool mode = syPyGlue.checkDaemonMode();
+
+    return Py_BuildValue("i", mode);
+}
 static PyObject *setWindowTitle(PyObject *self, PyObject *args)
 {
     char *title;
@@ -492,6 +498,9 @@ static PyMethodDef SyntroPythonMethods[] = {
     "Stops the SyntroPython library.\n"
     "This should be called just before exiting.\n"
     "There are no parameters and the function returns None."},
+
+    {"checkDaemonMode", (PyCFunction)checkDaemonMode, METH_NOARGS,
+    "Returns True if '-d' was specified on command line"},
 
     {"vidCapOpen", (PyCFunction)vidCapOpen, METH_VARARGS,
     "Tries to open a camera. The camera is specified by a \n"

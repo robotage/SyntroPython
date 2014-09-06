@@ -49,6 +49,9 @@ void SyntroPythonGlue::startLib(const char *productType, int& argc, char **argv,
 {
     m_argc = argc;
     m_argv = argv;
+
+    m_daemonMode = SyntroUtils::checkDaemonModeFlag(m_argc, m_argv);
+
     if (SyntroUtils::checkConsoleModeFlag(m_argc, m_argv)) {
         QCoreApplication a(m_argc, m_argv);
         SyntroUtils::loadStandardSettings(productType, a.arguments());
