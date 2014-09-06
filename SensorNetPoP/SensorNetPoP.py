@@ -57,9 +57,9 @@ SENSOR_UPDATE_INTERVAL = 0.5
 
 accel = RT_ADXL345.RT_ADXL345()
 light = RT_TSL2561.RT_TSL2561()
-temperature = RT_HTU21D.RT_HTU21D()
+temperature = RT_MCP9808.RT_MCP9808()
 pressure = RT_BMP180.RT_BMP180()
-humidity = temperature
+humidity = RT_HTU21D.RT_HTU21D()
 
 # Now import what we need
 
